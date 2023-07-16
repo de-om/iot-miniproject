@@ -28,14 +28,19 @@ def mqtt_callback(topic, msg):
     topic = topic.decode()
     print(f"Me llego por '{topic}' esto: '{msg}'.")
     if topic == MQTT_TOPIC:
-        if msg == "Algo a menos de 10cm":
-            led.on()
-            sensorDHT.measure()
-            temp = sensorDHT.temperature()
-            hum = sensorDHT.humidity()
-            print(f"T={temp:02d} ºC, {hum:02d} %")
-            utime.sleep_ms(INTERVAL)
-            led.off()
+        try:
+            dist = float(msg.lstrip("Dist: "))
+            if dist < 10:
+                led.on()
+                sensorDHT.measure()
+                temp = sensorDHT.temperature()
+                hum = sensorDHT.humidity()
+                print(f"T={temp:02d} ºC, {hum:02d} %")
+                print("Algo está a menos de 10cm!")
+                utime.sleep_ms(INTERVAL)
+                led.off()
+        except:
+            pass
 
 # PUBLICAR MENSAJES
 def publish_mqtt_message(topic, message):
@@ -69,10 +74,8 @@ while True:
             
             # Mensaje de distancia
             distance_cm = hcsr_sensor.distance_cm()
-            if distance_cm < 10:
-                dist_message = 'Algo a menos de 10cm'
-                publish_mqtt_message(MQTT_TOPIC, dist_message)
-                
+            dist_message = f'Dist: {distance_cm}'
+            publish_mqtt_message(MQTT_TOPIC, dist_message)
             
             # Mensaje de temperatura y humedad
             sensorDHT.measure()
